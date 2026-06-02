@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Учет продаж и склада</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--soft:#eef3f8;--text:#17202a;--muted:#667085;--line:#d9e2ec;--primary:#123b63;--green:#168352;--red:#d64545;--orange:#c77700;--shadow:0 14px 34px rgba(18,59,99,.1)}
+[data-theme=dark]{--bg:#111827;--card:#182233;--soft:#223047;--text:#f7fafc;--muted:#b7c2d0;--line:#334155;--primary:#6aa7df;--green:#5ee0a1;--red:#ff8a8a;--orange:#ffd166;--shadow:0 16px 40px rgba(0,0,0,.25)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
+.app{min-height:100vh;display:grid;grid-template-columns:270px 1fr}.side{position:sticky;top:0;height:100vh;background:var(--card);border-right:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:18px}.brand{display:flex;gap:12px;align-items:center}.logo{width:42px;height:42px;border-radius:8px;background:var(--primary);color:white;display:grid;place-items:center;box-shadow:var(--shadow)}.brand h1{font-size:18px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:3px 0 0}.nav{display:grid;gap:6px}.nav button,.mobile button{border:0;background:transparent;color:var(--muted);display:flex;align-items:center;gap:10px;min-height:42px;border-radius:8px;padding:10px 12px;text-align:left}.nav button.active,.nav button:hover,.mobile button.active,.mobile button:hover{background:var(--soft);color:var(--primary)}svg{width:18px;height:18px}.sideBox{margin-top:auto;background:var(--soft);border-radius:8px;padding:13px;color:var(--muted);font-size:13px}
+.main{min-width:0;padding:26px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}h2{font-size:clamp(24px,3vw,34px);margin:0 0 8px}.subtitle{margin:0;color:var(--muted)}.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;min-height:40px;padding:9px 13px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 5px 14px rgba(18,59,99,.05);white-space:nowrap}.btn.primary{background:var(--primary);border-color:var(--primary);color:white}.btn.danger{background:#fff0ef;border-color:rgba(214,69,69,.35);color:var(--red)}
+.grid{display:grid;gap:16px}.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px;box-shadow:var(--shadow);min-width:0}.metric{display:grid;gap:9px;min-height:116px}.metricTop{display:flex;justify-content:space-between;color:var(--muted);font-size:13px}.metricIcon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:var(--soft);color:var(--primary)}.metric strong{font-size:clamp(22px,3vw,30px);line-height:1;overflow-wrap:anywhere}.metric small{color:var(--muted)}.green{color:var(--green)}.red{color:var(--red)}.orange{color:var(--orange)}.muted{color:var(--muted)}
+.two{display:grid;grid-template-columns:1.2fr .9fr;gap:16px}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.head h3{margin:0;font-size:18px}.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:7px}.full{grid-column:1/-1}label{font-size:13px;color:var(--muted)}input,select,textarea{width:100%;min-height:42px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;padding:10px 12px;outline:none}textarea{min-height:84px;resize:vertical}.filters{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:12px}
+.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;min-width:920px;background:var(--card)}th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px}th{color:var(--muted);font-size:12px;background:var(--soft);font-weight:700}tr:last-child td{border-bottom:0}.daySalesTable input,.daySalesTable select{min-width:110px}.daySalesTable .smallInput{min-width:72px}
+.pill{display:inline-flex;border-radius:999px;padding:5px 9px;font-size:12px;background:var(--soft);color:var(--muted)}.pill.green{background:#e7f7ee;color:var(--green)}.pill.red{background:#fff0ef;color:var(--red)}.rowActions{display:flex;gap:6px;flex-wrap:wrap}.iconBtn{width:34px;height:34px;border:1px solid var(--line);background:var(--card);border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.productGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}.productCard{display:grid;gap:14px;min-height:145px}.productTop{display:flex;justify-content:space-between;gap:12px}.productIcon{width:44px;height:44px;border-radius:8px;display:grid;place-items:center;background:var(--soft);color:var(--primary)}.productName{margin:0;font-size:17px}.stockBig{font-size:30px;font-weight:850;line-height:1;color:var(--primary)}.quickPrices{display:grid;grid-template-columns:1fr 1fr;gap:8px}.quickPrices input{min-height:36px;padding:8px 9px}
+.empty{min-height:140px;border:1px dashed var(--line);border-radius:8px;display:grid;place-items:center;text-align:center;color:var(--muted);padding:22px;background:var(--card)}.chartGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chartCard{min-height:350px}.chart{position:relative;min-height:280px}.toast{position:fixed;right:18px;bottom:18px;z-index:60;background:var(--text);color:var(--card);padding:12px 14px;border-radius:8px;box-shadow:var(--shadow);opacity:0;transform:translateY(18px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}.mobile{display:none}
+@media(max-width:1150px){.cards{grid-template-columns:repeat(2,1fr)}.chartGrid{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.side{display:none}.main{padding:18px 14px 92px}.top{display:grid}.actions{justify-content:flex-start}.cards,.chartGrid,.form,.filters,.quickPrices{grid-template-columns:1fr}.mobile{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:6px;z-index:40}.mobile button{justify-content:center;min-height:52px;padding:7px}.mobile span{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo"><i data-lucide="package-check"></i></div><div><h1 id="brandName">Учет продаж</h1><p>склад в упаковках</p></div></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="sideBox"><strong>Склад</strong><div id="sideStock" style="margin-top:6px">Загрузка...</div></div>
+</aside>
+<main class="main">
+  <div class="top">
+    <div><h2 id="title">Главная</h2><p class="subtitle" id="subtitle">Продажи, склад, точки и аналитика.</p></div>
+    <div class="actions">
+      <button class="btn primary" id="quickSale"><i data-lucide="plus"></i>Продажа</button>
+      <button class="btn" id="csvSales"><i data-lucide="file-down"></i>CSV продажи</button>
+      <button class="btn" id="csvStock"><i data-lucide="boxes"></i>CSV склад</button>
+      <button class="btn" id="xlsExport"><i data-lucide="sheet"></i>Excel</button>
+    </div>
+  </div>
+  <section class="view" id="view-dashboard"></section>
+  <section class="view" id="view-stock" hidden></section>
+  <section class="view" id="view-products" hidden></section>
+  <section class="view" id="view-points" hidden></section>
+  <section class="view" id="view-sales" hidden></section>
+  <section class="view" id="view-orders" hidden></section>
+  <section class="view" id="view-analytics" hidden></section>
+  <section class="view" id="view-summary" hidden></section>
+  <section class="view" id="view-settings" hidden></section>
+</main>
+<nav class="mobile" id="mobile"></nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY="salesWarehouse.fixedPrice.v1";
+const navItems=[
+ ["dashboard","Главная","layout-dashboard","Ключевые показатели продаж и склада."],
+ ["stock","Склад","warehouse","Остатки товаров в упаковках и быстрые цены."],
+ ["products","Товары","package","Товары, упаковки и цены."],
+ ["points","Точки","store","Точки продаж и фиксированные цены."],
+ ["sales","Продажи","shopping-cart","Продажи за день несколькими строками."],
+ ["orders","Заказы","clipboard-list","Новые заказы: принят или завершен."],
+ ["analytics","Аналитика","chart-no-axes-combined","Аналитика по товарам, точкам и периодам."],
+ ["summary","Саммари","notebook-tabs","Итоги месяца."],
+ ["settings","Настройки","settings","Валюта, тема и данные."]
+];
+const pointTypes=["магазин","кафе","фаст-фуд","кофейня","супермаркет","другое"];
+const payments=["наличными","перевод","под реализацию"];
+const $=s=>document.querySelector(s);
+const today=()=>new Date().toISOString().slice(0,10);
+const monthNow=()=>new Date().toISOString().slice(0,7);
+const uid=()=>crypto.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+const icon=n=>`<i data-lucide="${n}"></i>`;
+const esc=v=>String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+const num=v=>Number(v)||0;
+function opt(v,l,s){return `<option value="${esc(v)}" ${v===s?"selected":""}>${esc(l)}</option>`}
+function product(id){return state.products.find(x=>x.id===id)||{}}
+function point(id){return state.points.find(x=>x.id===id)||{}}
+function packSize(p){return Math.max(1,num((typeof p==="string"?product(p):p).packSize)||24)}
+function piecesFrom(packs,pieces,p){return num(packs)*packSize(p)+num(pieces)}
+function packText(qty,p){const v=num(qty)/packSize(p),r=Math.round(v*100)/100;return `${Number.isInteger(r)?r:r.toFixed(2).replace(/0+$/,"").replace(/\.$/,"")} уп.`}
+function splitPieces(qty,p){const s=packSize(p);return{packs:Math.floor(num(qty)/s),pieces:num(qty)%s}}
+function money(v){return new Intl.NumberFormat("ru-RU",{maximumFractionDigits:0}).format(num(v))+" "+state.settings.currency}
+function dateFmt(d){return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"long",year:"numeric"}).format(new Date(d+"T00:00:00"))}
+
+function makeDemo(){
+ const salePrice=65;
+ return {
+  products:[
+   {id:uid(),name:"Кола",kind:"напиток",sku:"COLA",cost:0,retail:salePrice,wholesale:salePrice,packSize:24,qty:150*24,min:10*24,comment:""},
+   {id:uid(),name:"Цитрус",kind:"напиток",sku:"CITRUS",cost:0,retail:salePrice,wholesale:salePrice,packSize:24,qty:150*24,min:10*24,comment:""},
+   {id:uid(),name:"Апельсин",kind:"напиток",sku:"ORANGE",cost:0,retail:salePrice,wholesale:salePrice,packSize:24,qty:100*24,min:10*24,comment:""},
+   {id:uid(),name:"Смородина",kind:"напиток",sku:"CURRANT",cost:0,retail:salePrice,wholesale:salePrice,packSize:24,qty:150*24,min:10*24,comment:""},
+   {id:uid(),name:"Гранат",kind:"напиток",sku:"POMEGRANATE",cost:0,retail:salePrice,wholesale:salePrice,packSize:24,qty:110*24,min:10*24,comment:""},
+   {id:uid(),name:"Лимон",kind:"напиток",sku:"LEMON",cost:0,retail:salePrice,wholesale:salePrice,packSize:24,qty:90*24,min:10*24,comment:""}
+  ],
+  points:[
+   ["Пловная АК","фаст-фуд",57],["Пловная Айни","фаст-фуд",57],["Пловная площадь","фаст-фуд",57],["Балбан","фаст-фуд",60],
+   ["Арман","фаст-фуд",60],["Хого КМ","фаст-фуд",60],["Хого центр","фаст-фуд",60],["Остров конфет","магазин",60],
+   ["Шоколадница","кофейня",60],["Бэта-2","магазин",60],["Палестина","фаст-фуд",60],["Бон-филе гриль","фаст-фуд",60],
+   ["Айша мечеть","другое",60],["Албан авто","другое",60],["Семья Тунгуч","магазин",60],["На улице","другое",60],
+   ["Ярмарка №1","другое",60],["Зерно","магазин",60],["Айданек","магазин",60]
+  ].map(x=>({id:uid(),name:x[0],address:"",type:x[1],priceType:"custom",fixedPrice:x[2],contact:"",phone:"",comment:"",status:"active"})),
+  sales:[],
+  orders:[],
+  moves:[],
+  settings:{currency:"сом",business:"Мой бизнес",dark:false,packSize:24,defaultMin:24,month:monthNow()}
+ };
+}
+function load(){
+ try{
+  const raw=localStorage.getItem(KEY);
+  if(!raw)return makeDemo();
+  const p=JSON.parse(raw);
+  p.settings={currency:"сом",business:"Мой бизнес",dark:false,packSize:24,defaultMin:24,month:monthNow(),...(p.settings||{})};
+  p.products=(p.products||[]).map(x=>({kind:x.name,sku:"",cost:0,retail:0,wholesale:0,packSize:24,qty:0,min:0,comment:"",...x}));
+  p.points=(p.points||[]).map(x=>({address:"",type:"другое",priceType:"custom",fixedPrice:0,contact:"",phone:"",comment:"",status:"active",...x}));
+  p.sales=(p.sales||[]).map(x=>({batchId:x.id,priceType:"custom",payment:"наличными",qty:0,price:0,total:0,cost:0,profit:0,...x}));
+  p.orders=(p.orders||[]).map(o=>({...o,items:(o.items||[]).map(i=>({...i,total:num(i.qty)*num(i.price),cost:num(i.cost),profit:num(i.qty)*num(i.price)-num(i.cost)}))}));
+  p.moves=p.moves||[];
+  return p;
+ }catch(e){return makeDemo()}
+}
+let state=load(),view="dashboard",edit={kind:null,id:null},charts={};
+let filters={month:state.settings.month||monthNow(),product:"all",point:"all",payment:"all",q:""};
+let analytics={period:"month",date:today(),month:state.settings.month||monthNow(),product:"all",point:"all",payment:"all",sort:"desc"};
+const app={nav:$("#nav"),mobile:$("#mobile"),title:$("#title"),subtitle:$("#subtitle"),toast:$("#toast"),sideStock:$("#sideStock"),brandName:$("#brandName")};
+
+function save(msg){localStorage.setItem(KEY,JSON.stringify(state));render();if(msg)toast(msg)}
+function toast(msg){app.toast.textContent=msg;app.toast.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>app.toast.classList.remove("show"),2200)}
+function productCostPerPiece(p){return packSize(p)>0?num(p.cost)/packSize(p):0}
+function productStockValue(p){return num(p.qty)*productCostPerPiece(p)}
+function stockValue(){return state.products.reduce((sum,p)=>sum+productStockValue(p),0)}
+function stockPackCount(){return state.products.reduce((sum,p)=>sum+(num(p.qty)/packSize(p)),0)}
+function soldPackText(qty,productId){return packText(qty,product(productId))}
+function saleRevenue(s){return num(s.qty)*num(s.price)}
+function saleCost(s){return num(s.qty)*productCostPerPiece(product(s.productId))}
+function saleProfit(s){return saleRevenue(s)-saleCost(s)}
+function priceByType(p,type,pt){if(type==="custom")return num(pt.fixedPrice)||num(p.retail);if(type==="wholesale")return num(p.wholesale)||num(p.retail);return num(p.retail)}
+function priceTypeText(t){if(t==="wholesale")return"оптовая";if(t==="custom")return"фиксированная";return"розничная"}
+function filteredSales(){
+ const q=filters.q.toLowerCase();
+ return state.sales.filter(s=>
+  (!filters.month||s.date.startsWith(filters.month))&&
+  (filters.product==="all"||s.productId===filters.product)&&
+  (filters.point==="all"||s.pointId===filters.point)&&
+  (filters.payment==="all"||s.payment===filters.payment)&&
+  (!q||product(s.productId).name.toLowerCase().includes(q)||point(s.pointId).name.toLowerCase().includes(q)||(s.comment||"").toLowerCase().includes(q))
+ ).sort((a,b)=>b.date.localeCompare(a.date));
+}
+function periodSales(){
+ return state.sales.filter(s=>{
+  if(analytics.period==="day"&&s.date!==analytics.date)return false;
+  if(analytics.period==="month"&&!s.date.startsWith(analytics.month))return false;
+  if(analytics.period==="week"){
+   const d=new Date(analytics.date+"T00:00:00"),x=new Date(s.date+"T00:00:00"),start=new Date(d);
+   start.setDate(d.getDate()-((d.getDay()+6)%7));
+   const end=new Date(start);end.setDate(start.getDate()+6);
+   if(x<start||x>end)return false;
+  }
+  return (analytics.product==="all"||s.productId===analytics.product)&&(analytics.point==="all"||s.pointId===analytics.point)&&(analytics.payment==="all"||s.payment===analytics.payment);
+ });
+}
+function totals(sales=filteredSales()){
+ return sales.reduce((a,s)=>{a.qty+=num(s.qty);a.revenue+=saleRevenue(s);a.cost+=saleCost(s);a.profit+=saleProfit(s);return a},{qty:0,revenue:0,cost:0,profit:0});
+}
+function sortedAnalyticsIds(sales,type){
+ const ids=[...new Set(sales.map(s=>type==="product"?s.productId:s.pointId))];
+ return ids.sort((a,b)=>{
+  const qtyA=sales.filter(s=>(type==="product"?s.productId:s.pointId)===a).reduce((sum,s)=>sum+num(s.qty),0);
+  const qtyB=sales.filter(s=>(type==="product"?s.productId:s.pointId)===b).reduce((sum,s)=>sum+num(s.qty),0);
+  return analytics.sort==="asc"?qtyA-qtyB:qtyB-qtyA;
+ });
+}
+function metric(label,value,ic,color,sub){return `<div class="card metric"><div class="metricTop"><span>${label}</span><span class="metricIcon">${icon(ic)}</span></div><strong class="${color||""}">${value}</strong><small>${sub||""}</small></div>`}
+function render(){
+ document.documentElement.dataset.theme=state.settings.dark?"dark":"";
+ app.brandName.textContent=state.settings.business;
+ app.nav.innerHTML=navItems.map(n=>`<button class="${view===n[0]?"active":""}" data-view="${n[0]}">${icon(n[2])}<span>${n[1]}</span></button>`).join("");
+ app.mobile.innerHTML=navItems.slice(0,5).map(n=>`<button class="${view===n[0]?"active":""}" data-view="${n[0]}">${icon(n[2])}<span>${n[1]}</span></button>`).join("");
+ document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{view=b.dataset.view;edit={kind:null,id:null};render()});
+ navItems.forEach(n=>$("#view-"+n[0]).hidden=view!==n[0]);
+ const nav=navItems.find(n=>n[0]===view);app.title.textContent=nav[1];app.subtitle.textContent=nav[3];
+ app.sideStock.textContent=`${state.products.length} товаров, ${packText(state.products.reduce((a,p)=>a+p.qty,0),{packSize:24})}`;
+ renderDashboard();renderStock();renderProducts();renderPoints();renderSales();renderOrders();renderAnalytics();renderSummary();renderSettings();
+ bindQuickPrices();
+ if(window.lucide)lucide.createIcons();
+}
+function productCards(items,actions=true,quick=true){
+ if(!items.length)return `<div class="empty">${icon("package")}<p>Товаров пока нет</p></div>`;
+ return `<div class="productGrid">${items.map(p=>`<div class="card productCard"><div class="productTop"><div><p class="productName">${esc(p.name)}</p><span class="muted">${esc(p.sku)} · ${packSize(p)} шт/уп</span></div><div class="productIcon">${icon("package")}</div></div><div class="stockBig">${packText(p.qty,p)}</div>${quick?`<div class="quickPrices"><div class="field"><label>Закуп за упаковку</label><input data-cost="${p.id}" type="number" min="0" step="0.01" value="${num(p.cost)}"></div><div class="field"><label>Отпуск за штуку</label><input data-retail="${p.id}" type="number" min="0" step="0.01" value="${num(p.retail)}"></div></div><button class="btn primary" data-save-prices="${p.id}">${icon("save")}Сохранить цены</button>`:""}${actions?`<div class="rowActions"><button class="btn" data-edit-product="${p.id}">${icon("pencil")}Карточка</button><button class="btn danger" data-del-product="${p.id}">${icon("trash-2")}Удалить</button></div>`:""}</div>`).join("")}</div>`;
+}
+function bindQuickPrices(){
+ document.querySelectorAll("[data-save-prices]").forEach(b=>b.onclick=()=>{
+  const p=product(b.dataset.savePrices);
+  if(!p.id)return;
+  p.cost=num(document.querySelector(`[data-cost="${p.id}"]`)?.value);
+  p.retail=num(document.querySelector(`[data-retail="${p.id}"]`)?.value);
+  if(!p.wholesale)p.wholesale=p.retail;
+  save("Цены товара сохранены");
+ });
+}
+function renderDashboard(){
+ const s=totals(state.sales);
+ const low=state.products.filter(p=>p.qty<=p.min);
+ $("#view-dashboard").innerHTML=`<div class="grid"><div class="cards">${metric("Товар на складе",money(stockValue()),"warehouse","orange","по закупочной цене")}${metric("Упаковок на складе",stockPackCount().toFixed(2).replace(/\.?0+$/,"")+" уп.","package","","остаток по всем товарам")}${metric("Продали на сумму",money(s.revenue),"banknote","green","за все время")}${metric("Чистыми заработали",money(s.profit),"trending-up","green","выручка минус себестоимость")}${metric("Продано",packText(s.qty,{packSize:24}),"boxes","","за все время")}</div><div class="two"><div class="card"><div class="head"><h3>Последние продажи</h3></div>${salesTable(state.sales.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8),false)}</div><div class="card"><div class="head"><h3>Низкий остаток</h3></div>${productCards(low,false,false)}</div></div></div>`;
+}
+function renderStock(){
+ $("#view-stock").innerHTML=`<div class="grid"><div class="card"><div class="head"><h3>Склад</h3><button class="btn primary" id="stockAdd">${icon("plus")}Добавить товар</button></div>${productCards(state.products,true,true)}</div></div>`;
+ $("#stockAdd").onclick=()=>{view="products";edit={kind:"product",id:null};render()};
+ document.querySelectorAll("[data-edit-product]").forEach(b=>b.onclick=()=>{edit={kind:"product",id:b.dataset.editProduct};view="products";render()});
+ document.querySelectorAll("[data-del-product]").forEach(b=>b.onclick=()=>{if(confirm("Удалить товар?")){state.products=state.products.filter(p=>p.id!==b.dataset.delProduct);save("Товар удален")}});
+}
+function productForm(){
+ const p=state.products.find(x=>x.id===edit.id)||{name:"",kind:"напиток",sku:"",cost:0,retail:0,wholesale:0,packSize:24,qty:0,min:0,comment:""};
+ const q=splitPieces(p.qty,p),m=splitPieces(p.min,p);
+ return `<form id="productForm" class="form"><div class="field"><label>Название</label><input id="pName" required value="${esc(p.name)}"></div><div class="field"><label>Вид товара</label><input id="pKind" value="${esc(p.kind)}"></div><div class="field"><label>Артикул</label><input id="pSku" value="${esc(p.sku)}"></div><div class="field"><label>Штук в упаковке</label><input id="pPack" type="number" min="1" step="1" value="${packSize(p)}"></div><div class="field"><label>Закуп за упаковку</label><input id="pCost" type="number" min="0" step="0.01" value="${p.cost}"></div><div class="field"><label>Отпуск за штуку</label><input id="pRetail" type="number" min="0" step="0.01" value="${p.retail}"></div><div class="field"><label>Опт за штуку</label><input id="pWholesale" type="number" min="0" step="0.01" value="${p.wholesale}"></div><div class="field"><label>Остаток, упаковки</label><input id="pPacks" type="number" min="0" step="1" value="${q.packs}"></div><div class="field"><label>Остаток, штуки</label><input id="pPieces" type="number" min="0" step="1" value="${q.pieces}"></div><div class="field"><label>Мин. остаток, упаковки</label><input id="pMinPacks" type="number" min="0" step="1" value="${m.packs}"></div><div class="field full"><label>Комментарий</label><textarea id="pCom">${esc(p.comment)}</textarea></div><div class="field full"><button class="btn primary">${icon("save")}Сохранить товар</button> ${edit.kind==="product"&&edit.id?`<button type="button" class="btn" id="cancelEdit">Отмена</button>`:""}</div></form>`;
+}
+function renderProducts(){
+ $("#view-products").innerHTML=`<div class="two"><div class="card"><div class="head"><h3>${edit.kind==="product"&&edit.id?"Редактировать товар":"Добавить товар"}</h3></div>${productForm()}</div><div class="card"><div class="head"><h3>Товары</h3></div>${productCards(state.products,true,true)}</div></div>`;
+ $("#productForm").onsubmit=e=>{e.preventDefault();const pack=Math.max(1,num($("#pPack").value)||24);const p={id:edit.id||uid(),name:$("#pName").value.trim(),kind:$("#pKind").value.trim()||$("#pName").value.trim(),sku:$("#pSku").value.trim(),cost:num($("#pCost").value),retail:num($("#pRetail").value),wholesale:num($("#pWholesale").value),packSize:pack,qty:num($("#pPacks").value)*pack+num($("#pPieces").value),min:num($("#pMinPacks").value)*pack,comment:$("#pCom").value.trim()};if(!p.name)return toast("Введите название товара");if(edit.kind==="product"&&edit.id)state.products=state.products.map(x=>x.id===edit.id?p:x);else state.products.push(p);edit={kind:null,id:null};save("Товар сохранен")};
+ const c=$("#cancelEdit");if(c)c.onclick=()=>{edit={kind:null,id:null};render()};
+ document.querySelectorAll("[data-edit-product]").forEach(b=>b.onclick=()=>{edit={kind:"product",id:b.dataset.editProduct};render()});
+ document.querySelectorAll("[data-del-product]").forEach(b=>b.onclick=()=>{if(confirm("Удалить товар?")){state.products=state.products.filter(p=>p.id!==b.dataset.delProduct);save("Товар удален")}});
+}
+function pointForm(){
+ const p=state.points.find(x=>x.id===edit.id)||{name:"",address:"",type:"фаст-фуд",priceType:"custom",fixedPrice:60,contact:"",phone:"",comment:"",status:"active"};
+ return `<form id="pointForm" class="form"><div class="field"><label>Название</label><input id="tName" required value="${esc(p.name)}"></div><div class="field"><label>Тип</label><select id="tType">${pointTypes.map(x=>opt(x,x,p.type)).join("")}</select></div><div class="field"><label>Цена для этой точки</label><select id="tPriceType">${opt("custom","Фиксированная цена",p.priceType)}${opt("retail","Цена отпуска товара",p.priceType)}${opt("wholesale","Оптовая цена товара",p.priceType)}</select></div><div class="field"><label>Фиксированная цена за 1 шт</label><input id="tFixedPrice" type="number" min="0" step="0.01" value="${num(p.fixedPrice)}"></div><div class="field"><label>Статус</label><select id="tStatus">${opt("active","Активная",p.status)}${opt("inactive","Неактивная",p.status)}</select></div><div class="field"><label>Адрес</label><input id="tAddress" value="${esc(p.address)}"></div><div class="field"><label>Контакт</label><input id="tContact" value="${esc(p.contact)}"></div><div class="field"><label>Телефон</label><input id="tPhone" value="${esc(p.phone)}"></div><div class="field full"><label>Комментарий</label><textarea id="tCom">${esc(p.comment)}</textarea></div><div class="field full"><button class="btn primary">${icon("save")}Сохранить точку</button> ${edit.kind==="point"?`<button type="button" class="btn" id="cancelPoint">Отмена</button>`:""}</div></form>`;
+}
+function pointsTable(){
+ if(!state.points.length)return `<div class="empty">${icon("store")}<p>Точек пока нет</p></div>`;
+ return `<div class="tableWrap"><table><thead><tr><th>Название</th><th>Тип</th><th>Цена</th><th>Фикс. цена</th><th>Статус</th><th>Продажи</th><th></th></tr></thead><tbody>${state.points.map(p=>`<tr><td><strong>${esc(p.name)}</strong><br><span class="muted">${esc(p.address)}</span></td><td>${esc(p.type)}</td><td>${priceTypeText(p.priceType)}</td><td>${money(p.fixedPrice)}</td><td><span class="pill ${p.status==="active"?"green":"red"}">${p.status==="active"?"активная":"неактивная"}</span></td><td>${money(state.sales.filter(s=>s.pointId===p.id).reduce((a,s)=>a+saleRevenue(s),0))}</td><td><div class="rowActions"><button class="iconBtn" data-edit-point="${p.id}">${icon("pencil")}</button><button class="iconBtn" data-del-point="${p.id}">${icon("trash-2")}</button></div></td></tr>`).join("")}</tbody></table></div>`;
+}
+function renderPoints(){
+ $("#view-points").innerHTML=`<div class="two"><div class="card"><div class="head"><h3>${edit.kind==="point"?"Редактировать точку":"Добавить точку"}</h3></div>${pointForm()}</div><div class="card"><div class="head"><h3>Точки</h3></div>${pointsTable()}</div></div>`;
+ $("#pointForm").onsubmit=e=>{e.preventDefault();const p={id:edit.id||uid(),name:$("#tName").value.trim(),address:$("#tAddress").value.trim(),type:$("#tType").value,priceType:$("#tPriceType").value,fixedPrice:num($("#tFixedPrice").value),contact:$("#tContact").value.trim(),phone:$("#tPhone").value.trim(),comment:$("#tCom").value.trim(),status:$("#tStatus").value};if(!p.name)return toast("Введите название точки");if(edit.kind==="point")state.points=state.points.map(x=>x.id===edit.id?p:x);else state.points.push(p);edit={kind:null,id:null};save("Точка сохранена")};
+ const c=$("#cancelPoint");if(c)c.onclick=()=>{edit={kind:null,id:null};render()};
+ document.querySelectorAll("[data-edit-point]").forEach(b=>b.onclick=()=>{edit={kind:"point",id:b.dataset.editPoint};render()});
+ document.querySelectorAll("[data-del-point]").forEach(b=>b.onclick=()=>{if(confirm("Удалить точку?")){state.points=state.points.filter(p=>p.id!==b.dataset.delPoint);save("Точка удалена")}});
+}
+function renderSales(){
+ $("#view-sales").innerHTML=`<div class="grid"><div class="card"><div class="head"><h3>${edit.kind==="sale"?"Редактирование продажи":"Продажи за день"}</h3></div>${saleForm()}</div><div class="card"><div class="head"><h3>История продаж</h3></div>${filterForm()}<div style="height:14px"></div>${salesTable(filteredSales(),true)}</div></div>`;
+ bindSale();bindFilters();
+}
+function daySaleRowHtml(line={}){
+ const selectedPointId=line.pointId||$("#sPoint")?.value||state.points.find(p=>p.status==="active")?.id||"";
+ const selectedProductId=line.productId||state.products[0]?.id||"";
+ const p=product(selectedProductId);
+ const pt=point(selectedPointId);
+ const type=line.priceType||pt.priceType||"custom";
+ const price=line.price!==undefined&&line.price!==""?line.price:priceByType(p,type,pt);
+ const parts=splitPieces(line.qty||0,p);
+
+ return `<tr data-sale-line>
+  <td>
+   <select class="lineProduct">
+    ${state.products.map(x=>opt(x.id,`${x.name} · остаток ${packText(x.qty,x)}`,selectedProductId)).join("")}
+   </select>
+  </td>
+  <td><input class="linePacks smallInput" type="number" min="0" step="1" value="${parts.packs||""}" placeholder="0"></td>
+  <td><input class="linePieces smallInput" type="number" min="0" step="1" value="${parts.pieces||""}" placeholder="0"></td>
+  <td>
+   <select class="linePriceType">
+    ${opt("custom","Цена точки",type)}
+    ${opt("retail","Отпуск",type)}
+    ${opt("wholesale","Опт",type)}
+   </select>
+  </td>
+  <td><input class="linePrice" type="number" min="0" step="0.01" value="${price}" ${line.id?"data-user-changed='1'":""}></td>
+  <td><input class="lineQtyTotal" disabled></td>
+  <td><input class="lineTotal" disabled></td>
+  <td><button type="button" class="iconBtn removeLine">${icon("trash-2")}</button></td>
+ </tr>`;
+}
+
+function saleForm(){
+ const editing=edit.kind==="sale"?state.sales.find(s=>s.id===edit.id):null;
+ const selectedPoint=editing?.pointId||state.points.find(p=>p.status==="active")?.id||"";
+ const selectedPayment=editing?.payment||"наличными";
+
+ return `<form id="saleForm" class="form">
+  <div class="field">
+   <label>Дата продаж</label>
+   <input id="sDate" type="date" value="${editing?editing.date:today()}" required>
+  </div>
+
+  <div class="field">
+   <label>Точка</label>
+   <select id="sPoint" required>
+    ${state.points.filter(p=>p.status==="active").map(p=>opt(p.id,p.name,selectedPoint)).join("")}
+   </select>
+  </div>
+
+  <div class="field">
+   <label>Оплата</label>
+   <select id="sPayment">
+    ${payments.map(p=>opt(p,p,selectedPayment)).join("")}
+   </select>
+  </div>
+
+  <div class="field">
+   <label>Общий итог</label>
+   <input id="sTotal" disabled>
+  </div>
+
+  <div class="field full">
+   <label>${editing?"Редактирование продажи":"Позиции продажи"}</label>
+   <div class="tableWrap daySalesTable">
+    <table>
+     <thead>
+      <tr>
+       <th>Товар</th>
+       <th>Уп.</th>
+       <th>Шт.</th>
+       <th>Цена</th>
+       <th>За 1 шт</th>
+       <th>Кол-во</th>
+       <th>Сумма</th>
+       <th></th>
+      </tr>
+     </thead>
+     <tbody id="saleLines">${daySaleRowHtml(editing||{})}</tbody>
+    </table>
+   </div>
+  </div>
+
+  ${editing?"":`<div class="field full"><button type="button" class="btn" id="addSaleLine">${icon("plus")}Добавить позицию</button></div>`}
+
+  <div class="field full">
+   <label>Комментарий</label>
+   <textarea id="sCom">${esc(editing?.comment||"")}</textarea>
+  </div>
+
+  <div class="field full">
+   <button class="btn primary">${icon("save")}${editing?"Сохранить изменения":"Сохранить продажу"}</button>
+   ${editing?`<button type="button" class="btn" id="cancelSaleEdit">Отмена</button>`:""}
+  </div>
+ </form>`;
+}
+
+function bindSale(){
+ const lines=$("#saleLines");
+ if(!lines)return;
+
+ const lineQty=line=>piecesFrom(
+  line.querySelector(".linePacks").value,
+  line.querySelector(".linePieces").value,
+  product(line.querySelector(".lineProduct").value)
+ );
+
+ const updateLine=line=>{
+  const p=product(line.querySelector(".lineProduct").value);
+  const pt=point($("#sPoint").value);
+  const type=line.querySelector(".linePriceType").value;
+  const priceInput=line.querySelector(".linePrice");
+
+  if(!priceInput.dataset.userChanged){
+   priceInput.value=priceByType(p,type,pt);
+  }
+
+  const qty=lineQty(line);
+  const price=num(priceInput.value);
+
+  line.querySelector(".lineQtyTotal").value=packText(qty,p);
+  line.querySelector(".lineTotal").value=money(qty*price);
+ };
+
+ const updateTotals=()=>{
+  let total=0;
+
+  lines.querySelectorAll("[data-sale-line]").forEach(line=>{
+   const p=product(line.querySelector(".lineProduct").value);
+   const qty=lineQty(line);
+   const price=num(line.querySelector(".linePrice").value);
+
+   line.querySelector(".lineQtyTotal").value=packText(qty,p);
+   line.querySelector(".lineTotal").value=money(qty*price);
+
+   total+=qty*price;
+  });
+
+  $("#sTotal").value=money(total);
+ };
+
+ const updateAll=()=>{
+  lines.querySelectorAll("[data-sale-line]").forEach(updateLine);
+  updateTotals();
+ };
+
+ const bindLine=line=>{
+  const resetPrice=()=>{
+   line.querySelector(".linePrice").dataset.userChanged="";
+   updateLine(line);
+   updateTotals();
+  };
+
+  line.querySelector(".lineProduct").onchange=resetPrice;
+  line.querySelector(".linePriceType").onchange=resetPrice;
+  line.querySelector(".linePacks").oninput=updateTotals;
+  line.querySelector(".linePieces").oninput=updateTotals;
+
+  line.querySelector(".linePrice").oninput=()=>{
+   line.querySelector(".linePrice").dataset.userChanged="1";
+   updateTotals();
+  };
+
+  line.querySelector(".removeLine").onclick=()=>{
+   if(lines.querySelectorAll("[data-sale-line]").length<=1){
+    return toast("Должна остаться хотя бы одна позиция");
+   }
+   line.remove();
+   updateTotals();
+  };
+ };
+
+ lines.querySelectorAll("[data-sale-line]").forEach(bindLine);
+
+ $("#sPoint").onchange=()=>{
+  lines.querySelectorAll("[data-sale-line]").forEach(line=>{
+   line.querySelector(".linePrice").dataset.userChanged="";
+  });
+  updateAll();
+ };
+
+ const addBtn=$("#addSaleLine");
+ if(addBtn){
+  addBtn.onclick=()=>{
+   const wrapper=document.createElement("tbody");
+   wrapper.innerHTML=daySaleRowHtml();
+   const line=wrapper.firstElementChild;
+   lines.appendChild(line);
+   bindLine(line);
+   updateLine(line);
+   updateTotals();
+   if(window.lucide)lucide.createIcons();
+  };
+ }
+
+ const cancel=$("#cancelSaleEdit");
+ if(cancel){
+  cancel.onclick=()=>{
+   edit={kind:null,id:null};
+   render();
+  };
+ }
+
+ $("#saleForm").onsubmit=e=>{
+  e.preventDefault();
+
+  const date=$("#sDate").value;
+  const pointId=$("#sPoint").value;
+  const payment=$("#sPayment").value;
+  const comment=$("#sCom").value.trim();
+
+  const rows=[...lines.querySelectorAll("[data-sale-line]")].map(line=>{
+   const productId=line.querySelector(".lineProduct").value;
+   const p=product(productId);
+   const qty=lineQty(line);
+   const price=num(line.querySelector(".linePrice").value);
+   const priceType=line.querySelector(".linePriceType").value;
+
+   return{productId,p,qty,price,priceType};
+  });
+
+  for(const r of rows){
+   if(!pointId)return toast("Выберите точку");
+   if(!r.productId)return toast("Выберите товар");
+   if(r.qty<=0||!Number.isInteger(r.qty))return toast("Количество должно быть целым числом штук");
+   if(r.price<0)return toast("Проверьте цену");
+  }
+
+  if(edit.kind==="sale"){
+   const old=state.sales.find(s=>s.id===edit.id);
+   if(!old)return toast("Продажа не найдена");
+
+   const r=rows[0];
+   const oldProduct=product(old.productId);
+   const available=num(r.p.qty)+(old.productId===r.productId?num(old.qty):0);
+
+   if(available<r.qty)return toast("Недостаточно товара: "+r.p.name);
+
+   if(oldProduct.id)oldProduct.qty+=num(old.qty);
+   r.p.qty-=r.qty;
+
+   const total=r.qty*r.price;
+   const cost=r.qty*productCostPerPiece(r.p);
+
+   state.sales=state.sales.map(s=>s.id===old.id?{
+    ...s,
+    date,
+    pointId,
+    productId:r.productId,
+    qty:r.qty,
+    price:r.price,
+    priceType:r.priceType,
+    total,
+    cost,
+    profit:total-cost,
+    payment,
+    comment
+   }:s);
+
+   edit={kind:null,id:null};
+   save("Продажа обновлена");
+   return;
+  }
+
+  const need={};
+  rows.forEach(r=>need[r.productId]=(need[r.productId]||0)+r.qty);
+
+  for(const productId in need){
+   const p=product(productId);
+   if(num(p.qty)<need[productId])return toast("Недостаточно товара: "+p.name);
+  }
+
+  const batchId=uid();
+
+  rows.forEach(r=>{
+   r.p.qty-=r.qty;
+
+   const total=r.qty*r.price;
+   const cost=r.qty*productCostPerPiece(r.p);
+
+   state.sales.push({
+    id:uid(),
+    batchId,
+    date,
+    pointId,
+    productId:r.productId,
+    qty:r.qty,
+    price:r.price,
+    priceType:r.priceType,
+    total,
+    cost,
+    profit:total-cost,
+    payment,
+    comment
+   });
+  });
+
+  save("Продажа сохранена");
+ };
+
+ updateAll();
+}
+function orderLineHtml(line={}){
+ const pid=line.productId||state.products[0]?.id||"",p=product(pid),pt=point($("#oPoint")?.value||state.points[0]?.id||""),type=line.priceType||pt.priceType||"custom",price=line.price!==undefined&&line.price!==""?line.price:priceByType(p,type,pt),q=splitPieces(line.qty||0,p);
+ return `<div class="card" data-order-line><div class="form"><div class="field full"><label>Товар</label><select class="orderProduct">${state.products.map(x=>opt(x.id,`${x.name} · остаток ${packText(x.qty,x)}`,pid)).join("")}</select></div><div class="field"><label>Упаковки</label><input class="orderPacks" type="number" min="0" step="1" value="${q.packs||""}"></div><div class="field"><label>Штуки</label><input class="orderPieces" type="number" min="0" step="1" value="${q.pieces||""}"></div><div class="field"><label>Итого</label><input class="orderQtyTotal" disabled></div><div class="field"><label>Тип цены</label><select class="orderPriceType">${opt("custom","Фиксированная цена точки",type)}${opt("retail","Цена отпуска товара",type)}${opt("wholesale","Оптовая цена товара",type)}</select></div><div class="field"><label>Цена за 1 шт</label><input class="orderPrice" type="number" min="0" step="0.01" value="${price}"></div><div class="field"><label>Сумма</label><input class="orderTotal" disabled></div><div class="field"><label>&nbsp;</label><button type="button" class="btn danger removeOrderLine">${icon("trash-2")}Удалить</button></div></div></div>`;
+}
+function renderOrders(){
+ $("#view-orders").innerHTML=`<div class="grid"><div class="card"><div class="head"><h3>Новый заказ</h3></div>${orderForm()}</div><div class="card"><div class="head"><h3>Заказы</h3></div>${ordersTable()}</div></div>`;
+ bindOrderForm();
+}
+function orderForm(){
+ return `<form id="orderForm" class="form"><div class="field"><label>Дата заказа</label><input id="oDate" type="date" value="${today()}" required></div><div class="field"><label>Точка</label><select id="oPoint" required>${state.points.filter(p=>p.status==="active").map(p=>opt(p.id,p.name,state.points[0]?.id)).join("")}</select></div><div class="field"><label>Оплата</label><select id="oPayment">${payments.map(p=>opt(p,p,"наличными")).join("")}</select></div><div class="field"><label>Итого</label><input id="oTotal" disabled></div><div class="field full"><label>Позиции заказа</label><div id="orderLines" class="grid">${orderLineHtml()}</div><button type="button" class="btn" id="addOrderLine">${icon("plus")}Добавить позицию</button></div><div class="field full"><label>Комментарий</label><textarea id="oCom"></textarea></div><div class="field full"><button class="btn primary">${icon("save")}Сохранить заказ</button></div></form>`;
+}
+function bindOrderForm(){
+ const lines=$("#orderLines");if(!lines)return;
+ const lineQty=line=>piecesFrom(line.querySelector(".orderPacks").value,line.querySelector(".orderPieces").value,product(line.querySelector(".orderProduct").value));
+ const updateLine=line=>{const p=product(line.querySelector(".orderProduct").value),pt=point($("#oPoint").value),type=line.querySelector(".orderPriceType").value,priceInput=line.querySelector(".orderPrice");priceInput.value=priceByType(p,type,pt);const qty=lineQty(line),price=num(priceInput.value);line.querySelector(".orderQtyTotal").value=packText(qty,p);line.querySelector(".orderTotal").value=money(qty*price)};
+ const updateTotals=()=>{let total=0;lines.querySelectorAll("[data-order-line]").forEach(line=>{const p=product(line.querySelector(".orderProduct").value),qty=lineQty(line),price=num(line.querySelector(".orderPrice").value);line.querySelector(".orderQtyTotal").value=packText(qty,p);line.querySelector(".orderTotal").value=money(qty*price);total+=qty*price});$("#oTotal").value=money(total)};
+ const bindLine=line=>{line.querySelector(".orderProduct").onchange=()=>{updateLine(line);updateTotals()};line.querySelector(".orderPacks").oninput=updateTotals;line.querySelector(".orderPieces").oninput=updateTotals;line.querySelector(".orderPriceType").onchange=()=>{updateLine(line);updateTotals()};line.querySelector(".orderPrice").oninput=updateTotals;line.querySelector(".removeOrderLine").onclick=()=>{if(lines.querySelectorAll("[data-order-line]").length<=1)return toast("Должна остаться хотя бы одна позиция");line.remove();updateTotals()}};
+ lines.querySelectorAll("[data-order-line]").forEach(bindLine);
+ $("#oPoint").onchange=()=>{lines.querySelectorAll("[data-order-line]").forEach(updateLine);updateTotals()};
+ $("#addOrderLine").onclick=()=>{const d=document.createElement("div");d.innerHTML=orderLineHtml();const line=d.firstElementChild;lines.appendChild(line);bindLine(line);updateLine(line);updateTotals();if(window.lucide)lucide.createIcons()};
+ $("#orderForm").onsubmit=e=>{e.preventDefault();const order={id:uid(),date:$("#oDate").value,pointId:$("#oPoint").value,payment:$("#oPayment").value,comment:$("#oCom").value.trim(),status:"accepted",items:[...lines.querySelectorAll("[data-order-line]")].map(line=>{const productId=line.querySelector(".orderProduct").value,p=product(productId),qty=lineQty(line),price=num(line.querySelector(".orderPrice").value),priceType=line.querySelector(".orderPriceType").value,total=qty*price,cost=qty*productCostPerPiece(p);return{productId,qty,price,priceType,total,cost,profit:total-cost}})};for(const item of order.items){if(!item.productId)return toast("Выберите товар");if(item.qty<=0||!Number.isInteger(item.qty))return toast("Количество должно быть целым числом штук")}state.orders.push(order);save("Заказ принят")};
+ updateTotals();
+}
+function ordersTable(){
+ const orders=state.orders||[];
+ if(!orders.length)return `<div class="empty">${icon("clipboard-list")}<p>Заказов пока нет</p></div>`;
+ return `<div class="tableWrap"><table><thead><tr><th>Дата</th><th>Точка</th><th>Позиции</th><th>Сумма</th><th>Статус</th><th></th></tr></thead><tbody>${orders.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(o=>{const total=o.items.reduce((a,i)=>a+num(i.qty)*num(i.price),0);return `<tr><td>${dateFmt(o.date)}</td><td><strong>${esc(point(o.pointId).name)}</strong></td><td>${o.items.map(i=>`${esc(product(i.productId).name)} - ${packText(i.qty,product(i.productId))}`).join("<br>")}</td><td><strong>${money(total)}</strong></td><td><span class="pill ${o.status==="completed"?"green":""}">${o.status==="completed"?"завершен":"принят"}</span></td><td><div class="rowActions">${o.status==="accepted"?`<button class="btn primary" data-complete-order="${o.id}">${icon("check")}Завершить</button>`:""}<button class="btn danger" data-del-order="${o.id}">${icon("trash-2")}Удалить</button></div></td></tr>`}).join("")}</tbody></table></div>`;
+}
+document.addEventListener("click",e=>{
+ const editSale=e.target.closest("[data-edit-sale]");if(editSale){edit={kind:"sale",id:editSale.dataset.editSale};view="sales";render();return}
+ const completeBtn=e.target.closest("[data-complete-order]");if(completeBtn)completeOrder(completeBtn.dataset.completeOrder);
+ const delBtn=e.target.closest("[data-del-order]");if(delBtn&&confirm("Удалить заказ?")){state.orders=state.orders.filter(o=>o.id!==delBtn.dataset.delOrder);save("Заказ удален")}
+ const delSale=e.target.closest("[data-del-sale]");if(delSale&&confirm("Удалить продажу и вернуть товар на склад?")){const s=state.sales.find(x=>x.id===delSale.dataset.delSale);if(s){product(s.productId).qty+=s.qty;state.sales=state.sales.filter(x=>x.id!==s.id);save("Продажа удалена")}}
+});
+function completeOrder(orderId){
+ const order=state.orders.find(o=>o.id===orderId);if(!order||order.status==="completed")return;
+ const need={};order.items.forEach(i=>need[i.productId]=(need[i.productId]||0)+num(i.qty));
+ for(const productId in need){const p=product(productId);if(num(p.qty)<need[productId])return toast("Недостаточно товара: "+p.name)}
+ const batchId=uid();
+ order.items.forEach(i=>{const p=product(i.productId),total=num(i.qty)*num(i.price),cost=num(i.qty)*productCostPerPiece(p);p.qty-=num(i.qty);state.sales.push({id:uid(),batchId,date:today(),pointId:order.pointId,productId:i.productId,qty:num(i.qty),price:num(i.price),priceType:i.priceType,total,cost,profit:total-cost,payment:order.payment,comment:"Заказ завершен. "+(order.comment||"")})});
+ order.status="completed";order.completedAt=today();save("Заказ завершен и перенесен в продажи");
+}
+function filterForm(){
+ return `<div class="filters"><div class="field"><label>Месяц</label><input id="fMonth" type="month" value="${filters.month}"></div><div class="field"><label>Товар</label><select id="fProduct">${opt("all","Все товары",filters.product)}${state.products.map(p=>opt(p.id,p.name,filters.product)).join("")}</select></div><div class="field"><label>Точка</label><select id="fPoint">${opt("all","Все точки",filters.point)}${state.points.map(p=>opt(p.id,p.name,filters.point)).join("")}</select></div><div class="field"><label>Оплата</label><select id="fPayment">${opt("all","Все оплаты",filters.payment)}${payments.map(p=>opt(p,p,filters.payment)).join("")}</select></div><div class="field"><label>Поиск</label><input id="fQ" value="${esc(filters.q)}"></div></div>`;
+}
+function bindFilters(){[["fMonth","month"],["fProduct","product"],["fPoint","point"],["fPayment","payment"],["fQ","q"]].forEach(([id,k])=>{const el=$("#"+id);if(el)el.oninput=()=>{filters[k]=el.value;if(k==="month"){state.settings.month=el.value;analytics.month=el.value}render()}})}
+function salesTable(items,actions){
+ if(!items.length)return `<div class="empty">${icon("shopping-cart")}<p>Продаж пока нет</p></div>`;
+ return `<div class="tableWrap"><table><thead><tr><th>Дата</th><th>Точка</th><th>Товар</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th>Оплата</th>${actions?"<th></th>":""}</tr></thead><tbody>${items.map(s=>{const p=product(s.productId);return `<tr><td>${dateFmt(s.date)}</td><td>${esc(point(s.pointId).name)}</td><td><strong>${esc(p.name)}</strong></td><td>${packText(s.qty,p)}<br><span class="muted">${s.qty} шт</span></td><td>${money(s.price)}<br><span class="muted">${priceTypeText(s.priceType)}</span></td><td><strong>${money(saleRevenue(s))}</strong></td><td>${esc(s.payment)}</td>${actions?`<td><div class="rowActions"><button class="iconBtn" data-edit-sale="${s.id}">${icon("pencil")}</button><button class="iconBtn" data-del-sale="${s.id}">${icon("trash-2")}</button></div></td>`:""}</tr>`}).join("")}</tbody></table></div>`;
+}
+function renderAnalytics(){
+ const sales=periodSales(),s=totals(sales);
+ $("#view-analytics").innerHTML=`<div class="grid"><div class="card"><div class="filters"><div class="field"><label>Период</label><select id="aPeriod">${opt("day","День",analytics.period)}${opt("week","Неделя",analytics.period)}${opt("month","Месяц",analytics.period)}${opt("all","Все",analytics.period)}</select></div><div class="field"><label>Дата</label><input id="aDate" type="date" value="${analytics.date}"></div><div class="field"><label>Месяц</label><input id="aMonth" type="month" value="${analytics.month}"></div><div class="field"><label>Точка</label><select id="aPoint">${opt("all","Все точки",analytics.point)}${state.points.map(p=>opt(p.id,p.name,analytics.point)).join("")}</select></div><div class="field"><label>Товар</label><select id="aProduct">${opt("all","Все товары",analytics.product)}${state.products.map(p=>opt(p.id,p.name,analytics.product)).join("")}</select></div><div class="field"><label>Оплата</label><select id="aPayment">${opt("all","Все оплаты",analytics.payment)}${payments.map(p=>opt(p,p,analytics.payment)).join("")}</select></div><div class="field"><label>Сортировка</label><select id="aSort">${opt("desc","По убыванию",analytics.sort)}${opt("asc","По возрастанию",analytics.sort)}</select></div></div></div><div class="cards">${metric("Выручка",money(s.revenue),"banknote","green","")}${metric("Себестоимость",money(s.cost),"coins","orange","")}${metric("Прибыль",money(s.profit),"trending-up","green","")}${metric("Продано",packText(s.qty,{packSize:24}),"boxes","","в пересчете на упаковки")}</div><div class="chartGrid"><div class="card chartCard"><div class="head"><h3>По товарам</h3></div><div class="chart"><canvas id="cProducts"></canvas></div></div><div class="card chartCard"><div class="head"><h3>По точкам</h3></div><div class="chart"><canvas id="cPoints"></canvas></div></div></div><div class="two"><div class="card"><div class="head"><h3>Товары</h3></div>${tableGroup(sales,"product")}</div><div class="card"><div class="head"><h3>Точки</h3></div>${tableGroup(sales,"point")}</div></div></div>`;
+ [["aPeriod","period"],["aDate","date"],["aMonth","month"],["aPoint","point"],["aProduct","product"],["aPayment","payment"],["aSort","sort"]].forEach(([id,k])=>$("#"+id).oninput=e=>{analytics[k]=e.target.value;render()});
+ setTimeout(()=>drawCharts(sales),0);
+}
+function tableGroup(sales,type){
+ const ids=sortedAnalyticsIds(sales,type);
+ if(!ids.length)return `<div class="empty">Нет данных</div>`;
+ return `<div class="tableWrap"><table><thead><tr><th>${type==="product"?"Товар":"Точка"}</th><th>Кол-во</th><th>Выручка</th><th>Прибыль</th></tr></thead><tbody>${ids.map(id=>{const rows=sales.filter(s=>(type==="product"?s.productId:s.pointId)===id),q=rows.reduce((a,s)=>a+num(s.qty),0),r=rows.reduce((a,s)=>a+saleRevenue(s),0),pr=rows.reduce((a,s)=>a+saleProfit(s),0),name=type==="product"?product(id).name:point(id).name;return `<tr><td><strong>${esc(name)}</strong></td><td>${type==="product"?soldPackText(q,id):packText(q,{packSize:24})}</td><td>${money(r)}</td><td class="green">${money(pr)}</td></tr>`}).join("")}</tbody></table></div>`;
+}
+function drawCharts(sales){
+ if(view!=="analytics"||!window.Chart)return;
+ Object.values(charts).forEach(c=>c.destroy());
+ charts={};
+ const make=(type)=>{
+  const ids=sortedAnalyticsIds(sales,type);
+  return {labels:ids.map(id=>type==="product"?product(id).name:point(id).name),data:ids.map(id=>{const rows=sales.filter(s=>(type==="product"?s.productId:s.pointId)===id);const qty=rows.reduce((a,s)=>a+num(s.qty),0);return type==="product"?qty/packSize(product(id)):qty/24})};
+ };
+ const a=make("product"),b=make("point");
+ charts.products=new Chart($("#cProducts"),{type:"bar",data:{labels:a.labels,datasets:[{label:"Продано, уп.",data:a.data,backgroundColor:"#123b63",borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",scales:{x:{beginAtZero:true}}}});
+ charts.points=new Chart($("#cPoints"),{type:"bar",data:{labels:b.labels,datasets:[{label:"Продано, уп.",data:b.data,backgroundColor:"#168352",borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:"y",scales:{x:{beginAtZero:true}}}});
+}
+function renderSummary(){
+ const s=totals(state.sales.filter(x=>x.date.startsWith(filters.month)));
+ const best=[...new Set(state.sales.map(x=>x.productId))].map(id=>({name:product(id).name,qty:state.sales.filter(s=>s.productId===id&&s.date.startsWith(filters.month)).reduce((a,s)=>a+num(s.qty),0)})).sort((a,b)=>b.qty-a.qty)[0];
+ $("#view-summary").innerHTML=`<div class="grid"><div class="card"><div class="head"><h3>Саммари месяца</h3><input id="summaryMonth" type="month" value="${filters.month}" style="max-width:170px"></div><p style="font-size:18px;line-height:1.65;margin:0">За месяц продали на сумму ${money(s.revenue)}, себестоимость проданного товара - ${money(s.cost)}, чистыми заработали - ${money(s.profit)}. Лучше всего уходит ${best&&best.qty?best.name:"пока нет данных"}. Продано всего ${packText(s.qty,{packSize:24})}.</p></div><div class="cards">${metric("Продали на сумму",money(s.revenue),"banknote","green",filters.month)}${metric("Себестоимость",money(s.cost),"coins","orange","")}${metric("Чистыми заработали",money(s.profit),"trending-up","green","")}${metric("Продано",packText(s.qty,{packSize:24}),"boxes","","")}</div></div>`;
+ $("#summaryMonth").oninput=e=>{filters.month=e.target.value;state.settings.month=e.target.value;render()};
+}
+function renderSettings(){
+ $("#view-settings").innerHTML=`<div class="two"><div class="card"><div class="head"><h3>Настройки</h3></div><div class="form"><div class="field"><label>Название бизнеса</label><input id="setBusiness" value="${esc(state.settings.business)}"></div><div class="field"><label>Валюта</label><input id="setCurrency" value="${esc(state.settings.currency)}"></div><div class="field"><label>Рабочий месяц</label><input id="setMonth" type="month" value="${filters.month}"></div><div class="field full"><label><input id="setDark" type="checkbox" ${state.settings.dark?"checked":""} style="width:auto;min-height:auto"> Темная тема</label></div><div class="field full"><button class="btn primary" id="saveSettings">${icon("save")}Сохранить</button></div></div></div><div class="card"><div class="head"><h3>Данные</h3></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="demoBtn">${icon("database")}Восстановить стартовые данные</button><button class="btn danger" id="clearBtn">${icon("trash-2")}Очистить все</button></div></div></div>`;
+ $("#saveSettings").onclick=()=>{state.settings.business=$("#setBusiness").value.trim()||"Мой бизнес";state.settings.currency=$("#setCurrency").value.trim()||"сом";state.settings.dark=$("#setDark").checked;state.settings.month=$("#setMonth").value||monthNow();filters.month=state.settings.month;save("Настройки сохранены")};
+ $("#demoBtn").onclick=()=>{if(confirm("Заменить текущие данные стартовыми?")){state=makeDemo();filters.month=state.settings.month;analytics.month=state.settings.month;save("Стартовые данные восстановлены")}};
+ $("#clearBtn").onclick=()=>{if(confirm("Очистить все данные?")){state={products:[],points:[],sales:[],orders:[],moves:[],settings:{currency:"сом",business:"Мой бизнес",dark:false,packSize:24,defaultMin:24,month:monthNow()}};save("Данные очищены")}};
+}
+function exportCsv(type){
+ let rows,name;
+ if(type==="stock"){rows=[["Товар","Упаковка","Остаток","Закуп за упаковку","Отпуск за штуку","Опт за штуку","Сумма склада"],...state.products.map(p=>[p.name,packSize(p),packText(p.qty,p),p.cost,p.retail,p.wholesale,productStockValue(p)])];name="stock.csv"}
+ else{rows=[["Дата","Точка","Товар","Кол-во шт","Кол-во уп","Цена","Сумма","Себестоимость","Прибыль","Оплата"],...filteredSales().map(s=>[s.date,point(s.pointId).name,product(s.productId).name,s.qty,packText(s.qty,product(s.productId)),s.price,saleRevenue(s),saleCost(s),saleProfit(s),s.payment])];name="sales-"+filters.month+".csv"}
+ download("\uFEFF"+rows.map(r=>r.map(c=>`"${String(c??"").replaceAll('"','""')}"`).join(";")).join("\n"),name,"text/csv;charset=utf-8");
+}
+function exportXls(){download(`<html><head><meta charset="UTF-8"></head><body><h2>Продажи</h2>${salesTable(filteredSales(),false)}<h2>Склад</h2>${productCards(state.products,false,false)}</body></html>`,"report-"+filters.month+".xls","application/vnd.ms-excel")}
+function download(content,name,type){const b=new Blob([content],{type}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);toast("Файл подготовлен")}
+$("#quickSale").onclick=()=>{view="sales";render()};
+$("#csvSales").onclick=()=>exportCsv("sales");
+$("#csvStock").onclick=()=>exportCsv("stock");
+$("#xlsExport").onclick=exportXls;
+render();
+</script>
+</body>
+</html>
